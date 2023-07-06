@@ -1,0 +1,11 @@
+
+{
+  "development": {
+    "username": "root",
+    "password": "young00000",
+    "database": "mobile",
+    "host": "127.0.0.1",
+    "port": "3306",
+    "dialect": "mysql"
+  }
+}
