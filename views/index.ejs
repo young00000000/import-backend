@@ -8,10 +8,10 @@
 <h1><%= title %></h1>
 <p>Welcome to <%= title %></p>
 <a href="/auth/kakao" methods="post">
-  <button>회원가입</button>
+  <button>로그인</button>
 </a>
-<a href="/kakao" methods="post">
-  <button>kakao</button>
+<a href="/auth/logout" methods="post">
+  <button>로그아웃</button>
 </a>
 <div class="container">
   <div class="jumbotron">
@@ -29,6 +29,8 @@
     </div>
     <input type="submit" value="올리기">
   </form>
+  <img src="/backend/routes/post/img">
+ 
 </div>
 </body>
 </html>

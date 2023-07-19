@@ -17,21 +17,33 @@ module.exports = (passport) => {
                     kakaoId: profile.id,
                     provider: 'kakao'
                 }});
-                console.log("test");
+            console.log("test");
+            
             if (exUser) {
+                await User.update({
+                    accessToken:accessToken 
+                },{
+                    where:{
+                        kakaoId: profile.id
+                    }
+                }
+                )
+                exUser.accessToken=accessToken;
                 console.log(789)
                 done(null, exUser);
 
             } else {
-                console.log(000)
+                console.log(0)
                 const newUser = await User.create({ //새 유저 생성
                     email: profile._json?.kakao_account.email,//nullish라 판단하면 에러가아닌 undefined 출력
                     nick_name: profile.displayName,
                     kakaoId: profile.id,
                     //rank:"common", 동아리 회원이 될때 랭크 생성 => 여기서 랭크 안넣음
                     provider: 'kakao',
+                    accessToken:accessToken,
                     rank:1, //그냥 유저는 1(=기본값)
                 });
+                newUser.accessToken = accessToken;
                 done(null, newUser);
             }
 

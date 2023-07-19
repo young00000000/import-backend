@@ -6,78 +6,62 @@ const { User } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const {Op} = require("sequelize");
 const {config} = require("dotenv");
+const cors = require('cors');
+const axios = require('axios');
+const corsOptions = {
+    origin: 'http://localhost:4000',
+  };
 
+const router = express.Router();
 
-const router = express.Router();/*
-router.post('/join', isNotLoggedIn ,async (req, res, next) => {
-    const {email, nick_name, password} =req.body;
-    try {
-        const exUser = await User.findOne({where: {email}});
-        if (exUser) {
-            return res.redirect('/join');
-        }
-        const hash = await bcrypt.hash(password,12);
-        await User.create({
-            email,
-            nick_name,
-            password: hash,
-        });
-        return res.redirect('/');
-    } catch (error) {
-        console.error(error);
-        return next(error);
-    }
-});
-
-router.post('/login', isNotLoggedIn, (req, res, next) => {
-    passport.authenticate('local',(authError, user, info) => {
-        if(authError) {
-            console.error(authError);
-            return next(authError);
-        }
-        if (!user) {
-            return res.redirect('/');
-        }
-        return req.login(user, (loginError) => {
-            if(loginError) {
-                console.error(loginError);
-                return next(loginError);
-            }
-            return res.redirect('/');
-        });
-    })(req,res,next);
-});
-*/
-/*router.get('/logout', authenticationToken, (req,res) => {
-    try{
+router.get('/logout',async(req,res)=>{
+    // https://kapi.kakao/com/v1/user/logout
+    const accessToken = req.headers['accesstoken'];
+    const refreshToken = req.headers['refreshtoken'];
+    const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+  try {
+    //console.log(req.user)
     
-        req.logout(function(err) {
-            if (err) { 
-                console.log(err);
-                return res.sendStatus(401)
-             }
-            
-            req.session.destroy();
-             return res.sendStatus(200)
-          });
-       
-        //refresh, access 삭제
-       
-    }catch(err){
-        console.log(err);
     
-    }
-   
-});*/
-router.get('/logout',isLoggedIn,logout);
+    const ACCESS = await User.findOne({
+        attributes:['accessToken'],
+        raw:true,
+        where:{
+            id:req.user.userId
+        }
+    });
+    const ACCESS_TOKEN = ACCESS.accessToken;
+    console.log("accessToken: ",ACCESS_TOKEN);
+    let logout = await axios({
+      method:'post',
+      url:'https://kapi.kakao.com/v1/user/unlink',
+      headers:{
+        'Authorization': `Bearer ${ACCESS_TOKEN}`
+      }
+    });
+    res.cookie('accessToken','',{maxAge:0}); //쿠키 만료 10분
+    res.cookie('refreshToken','',{maxAge:0});
+    res.redirect('http://localhost:4000');
+  } catch (error) {
+    console.error(error);
+    res.json(error);
+  }
+  // 세션 정리
+  //req.logout();
+  
+  req.session.destroy();
+
+  
+  
+});
 
 router.get('/kakao', passport.authenticate('kakao'));
 
 router.get('/kakao/callback',passport.authenticate('kakao',{
-    failureRedirect: 'http://localhost:4000/loginfail',
+    failureRedirect: 'http://localhost:4000',
     failureMessage: true,
 }),async (req, res) => {
-    console.log(req);
     const kakao = Number(req.user.kakaoId);
 
     const loggedInUser= await User.findAll({
@@ -103,12 +87,11 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
             expiresIn: '12h', //기간 12시간
         }
     );
-    console.log(req.isAuthenticated());
 
 
 
-    //console.log("token: " + accessToken);
-    //console.log("refresh: " + refreshToken);
+    console.log("token: " + accessToken);
+    console.log("refresh: " + refreshToken);
 
     res.cookie('accessToken',accessToken,{maxAge:60*10*1000}); //쿠키 만료 10분
     res.cookie('refreshToken',refreshToken,{maxAge:60*60*12*1000}); //쿠키 만료 12시간
@@ -142,6 +125,15 @@ router.get("/tokenverification",verifyToken, (req, res) => {
     }
     res.setHeader("accesstoken", accessToken);
     res.setHeader("refreshtoken", refreshToken);
+    const user = {
+        nick_name: req.user.nick_name,
+        userId: req.user.userId,
+        kakaoId: req.user.kakaoId,
+        rank: req.user.rank,
+      };
+      console.log(user);
+    res.json(user);
+    
     return res.sendStatus(200); // Success
 });
 module.exports = router;

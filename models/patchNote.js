@@ -11,6 +11,18 @@ module.exports = class PatchNote extends Sequelize.Model{
                 type: Sequelize.TEXT,
                 allowNull: false,
             },
+            tagF: { //1
+                type: Sequelize.STRING(25),
+                allowNull: true,
+            },
+            tagS: { //2
+                type: Sequelize.STRING(25),
+                allowNull: true,
+            },
+            tagT: { //3
+                type: Sequelize.STRING(25),
+                allowNull: true,
+            },
             category: {
                 type: Sequelize.STRING(50),
                 allowNull: false,

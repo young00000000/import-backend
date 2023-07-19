@@ -5,12 +5,12 @@ const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 const { Op } = require("sequelize");
-// Helper function to get table and tableComment based on tableCategory
+// Helper function to get table and tableComment based on category
 //table 설정
-const getTables = (tableCategory) => {
+const getTables = (category) => {
     let table, tableComment, relatedTableId;
 
-    switch (tableCategory) {
+    switch (category) {
         case 'notice':
             table = RootPost;
             tableComment = RootComment;
@@ -59,6 +59,8 @@ const getdata = async (table,column, dataId) =>{
     data.forEach((obj) => {
         obj.rank = obj["User.rank"];
         obj.nick_name = obj["User.nick_name"];
+        obj.userId = obj["UserId"];
+        delete obj["UserId"];
         delete obj["User.rank"];
         delete obj["User.nick_name"];
     });
@@ -82,6 +84,8 @@ const getdatas = async (table) =>{
         obj.nick_name = obj["User.nick_name"];
         delete obj["User.rank"];
         delete obj["User.nick_name"];
+        obj.userId = obj["UserId"];
+        delete obj["UserId"];
     });
     return datas;
 }
@@ -100,12 +104,17 @@ const maxnumber = async (tableComment,relatedTableId,group,id)=>{
     return sequence;
 }
 
+function categoryParams(req,res){
+    let category = req.query.category;
+}
+
 //목록
 router.get("/", async function (req, res) {
     const body = req.body;
-    body.tableCategory = "notice";
+    const category = req.query.category
+    
     try {
-        const { table, tableComment, relatedTableId } = getTables(body.tableCategory);
+        const { table, tableComment, relatedTableId } = getTables(category);
 
         const posts = await getdatas(table);
 
@@ -120,7 +129,7 @@ router.get("/", async function (req, res) {
 router.post("/edit",verifyToken, async (req, res) => {
     const body = req.body;
     const user = req.user;
-    body.tableCategory = "notice";
+
     let table, postId;
 
     /*
@@ -129,7 +138,7 @@ router.post("/edit",verifyToken, async (req, res) => {
     3. 다시 nowPost에 지금 해당 데이터 담아서 리턴
     * */
     try {
-        switch (body.tableCategory){
+        switch (body.category){
             case 'notice':
                 const notice = await RootPost.create({
                     title: body.title,
@@ -151,6 +160,7 @@ router.post("/edit",verifyToken, async (req, res) => {
                     tagF: body.tagF,
                     tagS: body.tagS,
                     tagT: body.tagT,
+                    topic: body.topic,
                     category: body.category,
                     file: "",
                     UserId: user.userId,
@@ -217,10 +227,10 @@ router.post("/edit",verifyToken, async (req, res) => {
 //상세조회
 router.get("/:id",async (req, res) => {
     const body = req.body;
-
-    body.tableCategory = "notice";
+    const category = req.query.category;
+    //body.category = "notice";
     try {
-        const { table, tableComment, relatedTableId } = getTables(body.tableCategory);
+        const { table, tableComment, relatedTableId } = getTables(category);
         const post = await getdata(table,"id",req.params.id);
         if (!post) {
             return res.status(404).send("Post not found");
@@ -240,9 +250,10 @@ router.post("/edit/:id", verifyToken,async (req, res) => {
     const body = req.body;
     const user = req.user;
     let table, postId;
-    body.tableCategory = "notice";
+    
+    // body.category = "notice";
     try {
-        switch (body.tableCategory){
+        switch (body.category){
             case 'notice':
                 const notice = await RootPost.update({
                         title: body.title,
@@ -266,6 +277,7 @@ router.post("/edit/:id", verifyToken,async (req, res) => {
                 const qna = await ListPost.update({
                         title: body.title,
                         content: body.content,
+                        topic:body.topic,
                         tagF: body.tagF,
                         tagS: body.tagS,
                         tagT: body.tagT,
@@ -350,9 +362,10 @@ router.post("/edit/:id", verifyToken,async (req, res) => {
 router.delete("/deleted/:id", async (req, res) => {
     const body = req.body;
     //const user = req.user;
-    body.tableCategory = "notice";
+    //body.category = "notice";
+    const category = req.query.category;
     try{
-        const { table, tableComment, relatedTableId } = getTables(body.tableCategory);
+        const { table, tableComment, relatedTableId } = getTables(body.category);
         await table.destroy({
             where: {
                 id: { [Op.eq]: req.params.id },
@@ -371,9 +384,9 @@ router.post("/comment/:id", verifyToken,async (req, res) => {
 
     const body = req.body;
     const user = req.user;
-    body.tableCategory = "notice";
+    //body.category = "notice";
     try {
-        const { table, tableComment, relatedTableId } = getTables(body.tableCategory);
+        const { table, tableComment, relatedTableId } = getTables(body.category);
 
         const result = await tableComment.findOne({
             attributes: [[sequelize.fn("MAX", sequelize.cast(sequelize.col("sequence"), "INTEGER")), "max_sequence"]],
@@ -409,9 +422,9 @@ router.post("/comment/:id/:commentId", verifyToken,async (req, res) => {
 
     const body = req.body;
     const user = req.user;
-    body.tableCategory = "notice";
+    //body.category = "notice";
     try {
-        const { table, tableComment, relatedTableId } = getTables(body.tableCategory);
+        const { table, tableComment, relatedTableId } = getTables(body.category);
 
         await tableComment.update({
                 content: body.content,
@@ -437,9 +450,9 @@ router.post("/comment/:id/:commentId", verifyToken,async (req, res) => {
 router.delete("/deleted/:id/:commentId",verifyToken, async (req, res) => {
     const body = req.body;
     const user = req.user;
-    body.tableCategory = "notice";
+    //body.category = "notice";
     try{
-        const { table, tableComment, relatedTableId } = getTables(body.tableCategory);
+        const { table, tableComment, relatedTableId } = getTables(body.category);
         await tableComment.destroy({
             where: {
                 id: { [Op.eq]: req.params.commentId },
@@ -455,7 +468,8 @@ router.delete("/deleted/:id/:commentId",verifyToken, async (req, res) => {
 });
 
 //file upload
-router.post('/file',upload.single('fileupload'),verifyToken,function (req,res){
+router.post('/file',upload.single('fileupload'),function (req,res){
+
     console.log("post")
     console.log(req.file)
     console.log(req.file.path)

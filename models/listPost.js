@@ -7,6 +7,18 @@ module.exports = class ListPost extends Sequelize.Model{
                 type: Sequelize.STRING(255),
                 allowNull: false,
             },
+            tagF: { //1
+                type: Sequelize.STRING(25),
+                allowNull: true,
+            },
+            tagS: { //2
+                type: Sequelize.STRING(25),
+                allowNull: true,
+            },
+            tagT: { //3
+                type: Sequelize.STRING(25),
+                allowNull: true,
+            },
             content: {
                 type: Sequelize.TEXT,
                 allowNull: false,

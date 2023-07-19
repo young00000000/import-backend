@@ -4,15 +4,15 @@ const jwt = require("jsonwebtoken")
 const {v4:uuidv4} = require("uuid")
 const multer = require('multer');
 exports.isLoggedIn =  (req, res, next) => {
-    console.log(req);
-    console.log(req.isAuthenticated());
+    console.log(req.session);
     if (req.isAuthenticated()) {
+        console.log("미들웨어 isLoggedIn")
         next();
     } else {
+        console.log("로그인 필요함")
         res.status(403).send('로그인 필요');
     }
 };
-
 
 exports.isNotLoggedIn = (req, res, next) => {
     if(!req.isAuthenticated()) {
@@ -20,6 +20,15 @@ exports.isNotLoggedIn = (req, res, next) => {
     } else {
         res.redirect('/');
     }
+};
+
+
+exports.logout = (req, res) => {
+    console.log("미들웨어 로그아웃 위치함")
+    req.logout(() => {
+        console.log("리다이랙트 슬래쉬")
+        res.redirect('/');
+    });
 };
 
 /*토큰 유효성 검증
@@ -95,7 +104,7 @@ exports.verifyToken = async (req, res, next) => {
                 }
             });
             const newAccessToken = jwt.sign({user}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
-            const refresh = uuidv4();
+            const refresh = "updated";
             const newRefreshToken = jwt.sign({refresh}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '12h' });
             try {
                 await User.update(
@@ -170,7 +179,6 @@ exports.authenticationToken = async (req, res, next) => {
                     refreshToken:{ [Op.eq]:decoded.refreshToken } ,
                 }
             });
-
             return next();
         } catch (err) {
             console.error(err);
@@ -188,11 +196,11 @@ var imageFilter = (req, file, cb) => {
 };
 
 var storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // 서버에 저장될 위치
-        cb(null, "./image");
-    },
-    filename: (req, file, cb) => {
+  destination: (req, file, cb) => {
+    // 서버에 저장될 위치
+    cb(null, "./image");
+  },
+  filename: (req, file, cb) => {
         var mimeType;
 
         switch (file.mimetype) {
@@ -207,19 +215,12 @@ var storage = multer.diskStorage({
                 break;
         }
 
-        // 서버에 저장될 때 파일 이름
-        cb(null, Date.now() + "-" +uuidv4()+"."+mimeType);
-        // console.log("file.origianlname"+ file.originalname);
-    }
+    // 서버에 저장될 때 파일 이름
+    cb(null, Date.now() + "-" + uuidv4()+"."+mimeType);
+    // console.log("file.origianlname"+ file.originalname);
+  },
 });
-exports.upload = multer({ storage: storage, fileFilter: imageFilter });
-
-exports.logout = (req, res) => {
-    req.logout(() => {
-        res.redirect('/');
-    });
-};
-
+exports.upload = multer({ storage: storage, fileFilter: imageFilter })
 
 
 //랭크 확인 미들웨어

@@ -5,14 +5,16 @@ const {User} =require('../models');
 
 module.exports = (passport) => {
     passport.serializeUser((user, done) =>{
-        done(null, user.kakaoId);
+        //console.log(user);
+        done(null, {id: user.id,accessToken:user.accessToken});
     });
 
-    passport.deserializeUser((kakaoId,done) => {
+    passport.deserializeUser((user,done) => {
+        
         User.findOne({
-            where: {kakaoId},
+            where: {id:user.id},
         })
-            .then(user=> done(null, user))
+            .then(user=> done(null, {id: user.id,accessToken:user.accessToken}))
             .catch(err => done(err));
     });
 
