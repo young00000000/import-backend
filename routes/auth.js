@@ -110,7 +110,7 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
     }
 
 
-    res.redirect('http://localhost:4000');
+    res.redirect('http://localhost:3000');
 
 });
 
