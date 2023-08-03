@@ -1,7 +1,6 @@
-var express = require('express');
-var app = express();
 var createError = require('http-errors');
 var sequelize = require('./models').sequelize;
+var express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const passportConfig = require('./passport');
@@ -11,12 +10,18 @@ const cors = require('cors');
 require('dotenv').config();
 const cookieParser = require('cookie-parser');
 
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-const authRouter = require('./routes/auth');
-const noticeRouter = require('./routes/about/notice');
-const postRouter = require('./routes/post');
+const testRouter = require('./routes/test');
 
+const authRouter = require('./routes/auth');
+const postRouter = require('./routes/post');
+const userManagementRouter = require('./routes/admin/userManagement')
+const rankManagementRouter = require('./routes/admin/rankManagement');
+
+
+var app = express();
 sequelize.sync();
 passportConfig(passport);
 // view engine setup
@@ -30,60 +35,45 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set("trust proxy", 1);
 app.use(session({
-    resave: false,
-    saveUninitialized: false,
-    secret: process.env.COOKIE_SECRET,
-    cookie: {
-        httpOnly: 'http://localhost:4000/',
-        sameSite:'none',
-        //maxAge:60*60*1000, 쿠키가 언제 동안 보관될지 시간 설정
-        secure: true,
-        credentials:true,
-        domain:'localhost',
-
-    },
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.COOKIE_SECRET,
 }));
 app.use(cors({
-    origin:true,
-    credentials:true,
-    optionsSuccessStatus: 200,
+  origin:true,
+  credentials:true,
+  optionsSuccessStatus: 200,
 }))
-//
-sequelize.sync({ force: false })
-    .then(() => {
-        console.log('데이터베이스 연결됨.');
-    }).catch((err) => {
-    console.error(err);
-});
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/', indexRouter);
-// app.use('/users', usersRouter);
+app.use('/users', usersRouter);
 app.use('/auth', authRouter);
-app.use('/about/notice', noticeRouter);
 app.use('/post',postRouter);
+app.use('/test',testRouter);
+
+app.use('/admin/userManagement',userManagementRouter);
+app.use('/admin/rankManagement',rankManagementRouter);
+app.use('/image', express.static(path.join(__dirname, 'image')));
+
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-    next(createError(404));
+  next(createError(404));
 });
 
 // error handler
 app.use(function(err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-    // render the error page
-    res.status(err.status || 500);
-    res.render('error');
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
 });
-//
-//
-// module.exports = app;
 
 
-// 3000 포트로 서버 오픈
-app.listen(4000, function() {
-    console.log("start! express server on port 4000")
-})
+module.exports = app;

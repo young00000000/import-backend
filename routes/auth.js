@@ -13,6 +13,7 @@ const corsOptions = {
   };
 
 const router = express.Router();
+const frontURL =  'http://localhost:3000';
 
 router.get('/logout',async(req,res)=>{
     // https://kapi.kakao/com/v1/user/logout
@@ -42,7 +43,6 @@ router.get('/logout',async(req,res)=>{
     });
     res.cookie('accessToken','',{maxAge:0}); //쿠키 만료 10분
     res.cookie('refreshToken','',{maxAge:0});
-    res.redirect('http://localhost:4000');
   } catch (error) {
     console.error(error);
     res.json(error);
@@ -59,7 +59,7 @@ router.get('/logout',async(req,res)=>{
 router.get('/kakao', passport.authenticate('kakao'));
 
 router.get('/kakao/callback',passport.authenticate('kakao',{
-    failureRedirect: 'http://localhost:4000',
+    failureRedirect: frontURL,
     failureMessage: true,
 }),async (req, res) => {
     const kakao = Number(req.user.kakaoId);
@@ -93,7 +93,7 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
     console.log("token: " + accessToken);
     console.log("refresh: " + refreshToken);
 
-    res.cookie('accessToken',accessToken,{maxAge:60*10*1000}); //쿠키 만료 10분
+    res.cookie('accessToken',accessToken,{maxAge:60*180*1000}); //쿠키 만료 180분
     res.cookie('refreshToken',refreshToken,{maxAge:60*60*12*1000}); //쿠키 만료 12시간
 
     try {
@@ -110,7 +110,7 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
     }
 
 
-    res.redirect('http://localhost:3000');
+    res.redirect(frontURL);
 
 });
 

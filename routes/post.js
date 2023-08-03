@@ -68,7 +68,8 @@ const getdata = async (table,column, dataId) =>{
 
 };
 //목록
-const getdatas = async (table) =>{
+const getdatas = async (table,tableComment) =>{
+    
     const datas = await table.findAll({
         raw: true,
         include: [
@@ -79,9 +80,42 @@ const getdatas = async (table) =>{
             },
         ],
     });
+
+    const comments = await table.findAll({
+        attributes:['id'],
+        raw: true,
+        include: [
+            {
+                model: tableComment,
+                attributes: ['id'],
+                required: false, // INNER JOIN 대신 LEFT JOIN으로 설정하여 모든 Post가 결과에 포함되도록 함
+                },
+        ],
+        nest: true
+    });
+
+    console.log('이것은 목록 댓글개수확인을위한테스트야\n',comments);
+
+    const countComments = [];
+   
+
+    comments.forEach((item) => {
+        const id = item.id-1;
+        console.log(item)
+        if (item.tableComment+'s'.id=== null) {
+            countComments[id]= countComments[id] ? countComments[id] : 0;
+        } else {
+            countComments[id] = countComments[id] ? countComments[id] + 1 : 1;
+        }
+    });
+    console.log(countComments);
+
+    
     datas.forEach((obj) => {
+        
         obj.rank = obj["User.rank"];
         obj.nick_name = obj["User.nick_name"];
+        obj.numberOfComments=countComments[obj.id - 1];
         delete obj["User.rank"];
         delete obj["User.nick_name"];
         obj.userId = obj["UserId"];
@@ -116,7 +150,7 @@ router.get("/", async function (req, res) {
     try {
         const { table, tableComment, relatedTableId } = getTables(category);
 
-        const posts = await getdatas(table);
+        const posts = await getdatas(table,tableComment);
 
         console.log({ item: posts });
         res.json({ item: posts }); //배열 안에 내용이 없을때 {item: []} 로 보내짐
@@ -475,8 +509,15 @@ router.post('/file',upload.single('fileupload'),function (req,res){
     console.log(req.file.path)
     console.log(upload)
     console.log(upload.storage.getFilename)
+     // "public" 제거
+    let transformedPath = req.file.path.replace("public", "");
 
-    return res.send(req.file.path)
+    // 백슬래시("\")를 슬래시("/")로 변경
+    transformedPath = transformedPath.replace(/\\/g, "/");
+    transformedPath='/app/public'+transformedPath;
+    console.log(transformedPath);
+    return res.send(transformedPath);
+
 
 })
 
