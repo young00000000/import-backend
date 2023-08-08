@@ -23,6 +23,10 @@ const requestRankUsers = async()=>{
             }
         }
     })
+    users.forEach((obj) => {
+        obj.userId = obj["id"];
+        delete obj["id"];
+    });
     console.log('users: ',users)
     return users;
 
@@ -36,7 +40,7 @@ router.get('/',async(req,res)=>{
 
 //레벨 바꾸기
 router.post('/changeRank',async(req,res)=>{
-    console.log(req.body.changeRanks);
+    console.log("changeRanks:으아아ㅏ아아아아아아아ㅏ아아아아아아앙ㅇ\n",req.body.changeRanks);
     try{
         
         for(const item of req.body.changeRanks){
@@ -47,8 +51,28 @@ router.post('/changeRank',async(req,res)=>{
                     id:userId
                 }
             })
-            console.log('req: ',user.requestRank);
-            console.log('cha: ',changeRank);
+            //console.log('req: ',user.requestRank);
+            //console.log('cha: ',changeRank);
+            await User.update({
+                rank: changeRank,
+                requestRank: null,
+            },{
+                where:{
+                    id:userId
+                }
+            });
+
+            const nowUser = await User.findOne({
+                raw: true,
+                where:{
+                    id:userId
+                }
+            })
+            console.log('결과: ',nowUser);
+            const users = await requestRankUsers();
+            console.log(users);
+            res.json(users);
+            /*
             if(user.requestRank===changeRank||user.requestRank===null){
                 await User.update({
                     rank: changeRank,
@@ -73,6 +97,9 @@ router.post('/changeRank',async(req,res)=>{
                 console.log(item,'requestRank 와 changeRank 다르다')
                 res.sendStatus(401).send('requestRank와 changeRank가 다른 경우 존재')
             }
+            */
+
+
             
         }
     
