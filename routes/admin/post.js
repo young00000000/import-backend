@@ -40,11 +40,20 @@ const getdatas = async (table) =>{
 
 //모든 글 띄워주기
 router.get('/',async(req,res)=>{
-    const cardPosts = getdatas('CardPost');
-    const listPosts = getdatas('ListPost')
-    const patchNote = getdatas('PatchNote');
-    const project = getdatas('Project');
-    const rootPost=getdatas('RootPost');
+    const cardPosts = await getdatas(CardPost);
+    console.log(cardPosts)
+    const listPosts = await getdatas(ListPost)
+    console.log(listPosts)
+    const patchNote = await getdatas(PatchNote);
+    
+    const project = await getdatas(Project);
+    const rootPost=await getdatas(RootPost);
+    console.log(rootPost)
+
+    const allPosts = [...cardPosts,...listPosts,...rootPost,...patchNote,...project]
+    console.log("all: ",allPosts)
+
+    return res.json(allPosts)
 
     
 })

@@ -8,23 +8,24 @@ const { Op } = require("sequelize");
 
 router.post('/clubUser',async(req,res)=>{
     try{
+        
         const {department,grade,blog,github_url,framework,language,userId,requestRank} = req.body;
         console.log(department,grade,blog,github_url,framework,language,userId)
         await User.update({
-            requestRank:requestRank,
+            requestRank:req.body.requestRank,
         },{
             where:{
-                id:userId
+                id:req.body.userId
             }
         })
         const a = await ClubUser.create({
-            department:department,
-            grade: grade,
-            blog: blog,
-            github_url:github_url,
-            framework: framework,
-            language: language,
-            UserId:userId
+            department:req.body.department,
+            grade: req.body.grade,
+            blog: req.body.blog,
+            github_url:req.body.github_url,
+            framework: req.body.framework,
+            language: req.body.language,
+            UserId:req.body.userId
         })
         const requsetRankUser = await ClubUser.findAll({
             raw:true,

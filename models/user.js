@@ -15,7 +15,7 @@ module.exports = class User extends Sequelize.Model{
             kakaoId:{ //kakao에서 넘어오는 아이디
                 type: Sequelize.STRING(30),
                 allowNull: false,
-                unique: true,
+                
             },
             provider :{ //회원가입 방식 ex)'kakao'
                 type: Sequelize.STRING(10),
