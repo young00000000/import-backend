@@ -80,7 +80,7 @@ const getdatas = async (table,tableComment) =>{
             },
         ],
     });
-
+    //댓글 갯수 카운트
     const comments = await table.findAll({
         attributes:['id'],
         raw: true,

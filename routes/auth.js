@@ -114,17 +114,22 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
 
 });
 
-router.get("/tokenverification",verifyToken, (req, res) => {
+router.get("/tokenverification",verifyToken, async(req, res) => {
     console.log("123123");
     const accessToken = req.headers["accesstoken"] || req.cookies.accessToken;
     const refreshToken = req.headers["refreshtoken"] || req.cookies.refreshToken;
-    console.log("accessToken", accessToken);
-    console.log("refreshtoken", refreshToken);
+    //console.log("accessToken", accessToken);
+    //console.log("refreshtoken", refreshToken);
     if (!accessToken ) {
         return res.sendStatus(400); // Bad Request
     }
     res.setHeader("accesstoken", accessToken);
     res.setHeader("refreshtoken", refreshToken);
+    /*유저 정보가 바뀌었을 땐 토큰 다시 발급하는걸 어케 해야겟넹
+    const user = await User.findOne({
+        attributes:[nick_name,id,kakaoId,rank]
+    })
+    */
     const user = {
         nick_name: req.user.nick_name,
         userId: req.user.userId,
@@ -134,7 +139,7 @@ router.get("/tokenverification",verifyToken, (req, res) => {
       console.log(user);
     res.json(user);
     
-    return res.sendStatus(200); // Success
+     // Success
 });
 module.exports = router;
 
