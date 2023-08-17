@@ -117,6 +117,7 @@ router.post('/changeRank',async(req,res)=>{
 
 //반려하기
 router.post('/reject/:userId',async(req,res)=>{
+    console.log('반려 요청이 들어옴');
     try{
         //반려기때문에 요청레벨을 지운다.
         await User.update({

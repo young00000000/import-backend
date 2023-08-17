@@ -121,6 +121,7 @@ const getdatas = async (table,tableComment) =>{
         obj.userId = obj["UserId"];
         delete obj["UserId"];
     });
+    
     return datas;
 }
 
@@ -153,6 +154,7 @@ router.get("/", async function (req, res) {
         const posts = await getdatas(table,tableComment);
 
         console.log({ item: posts });
+        res.cookie('test',"cookie testsetset",{maxAge:60*180*1000});
         res.json({ item: posts }); //배열 안에 내용이 없을때 {item: []} 로 보내짐
     } catch (error) {
         console.error(error);
@@ -163,6 +165,7 @@ router.get("/", async function (req, res) {
 router.post("/edit",verifyToken, async (req, res) => {
     const body = req.body;
     const user = req.user;
+    console.log('user: !!!!!!~!~~~~~~~~~~', user)
 
     let table, postId;
 
@@ -250,6 +253,7 @@ router.post("/edit",verifyToken, async (req, res) => {
         const nowPost =await getdata(table,"id", postId);
 
         console.log({ content: nowPost[0] });
+        res.cookie('test',"cookie testsetset",{maxAge:60*180*1000});
         return res.json({ content: nowPost[0] });
 
     }catch (err){
@@ -393,7 +397,7 @@ router.post("/edit/:id", verifyToken,async (req, res) => {
 });
 
 //글 삭제
-router.delete("/deleted/:id", async (req, res) => {
+router.delete("/deleted/:id",verifyToken, async (req, res) => {
     const body = req.body;
     //const user = req.user;
     //body.category = "notice";
@@ -502,7 +506,7 @@ router.delete("/deleted/:id/:commentId",verifyToken, async (req, res) => {
 });
 
 //file upload
-router.post('/file',upload.single('fileupload'),function (req,res){
+router.post('/file',verifyToken,upload.single('fileupload'),function (req,res){
 
     console.log("post")
     console.log(req.file)

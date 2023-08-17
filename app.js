@@ -40,7 +40,7 @@ app.use(session({
   secret: process.env.COOKIE_SECRET,
 }));
 app.use(cors({
-  origin:true,
+  origin:"http://localhost:3000",
   credentials:true,
   optionsSuccessStatus: 200,
 }))

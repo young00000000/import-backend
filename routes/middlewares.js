@@ -40,7 +40,7 @@ exports.verifyToken = async (req, res, next) => {
 
     const accessToken = req.headers['accesstoken'];
     const refreshToken = req.headers['refreshtoken'];
-    console.log("verifytoken", accessToken, refreshToken);
+    //console.log("verifytoken", accessToken, refreshToken);
     // Access token이 있는 경우 검증
     if (accessToken) {
         try {
@@ -48,6 +48,7 @@ exports.verifyToken = async (req, res, next) => {
             console.log("accessToken success");
             req.user = decoded;
             return next();
+            
         } catch (err) {
             // Access token이 만료된 경우, Refresh token 검증
             if (err.name === 'TokenExpiredError' && refreshToken) {
@@ -79,8 +80,9 @@ exports.verifyToken = async (req, res, next) => {
                         res.sendStatus(500);
                         return;
                     }
-                    res.cookie('accessToken', newAccessToken, { httpOnly: 'http://localhost:3000/' ,maxAge:60*10*1000});
-                    res.cookie('refreshToken', newRefreshToken, { httpOnly: 'http://localhost:3000/' ,maxAge:60*60*12*1000});
+                    res.cookie('accessToken', newAccessToken, {maxAge:60*10*1000});
+                    res.cookie('refreshToken', newRefreshToken, {maxAge:60*60*12*1000});
+                    res.cookie('newToken1', "new", { httpOnly: 'http://localhost:3000/' ,maxAge:60*60*12*1000});
 
                     req.user = user;
                     return next();
@@ -90,27 +92,38 @@ exports.verifyToken = async (req, res, next) => {
                 }
             } else {
                 console.error(err);
-                return res.sendStatus(402);
+                return res.sendStatus(402); 
             }
         }
     } else if (refreshToken) { // Access token이 없는 경우 Refresh token 검증
         try {
+            
+            
             const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-            const user = User.findAll({
+            const user = await User.findOne({
                 raw:true, //쓸데없는 데이터 말고 dataValues 안의 내용만 나옴(궁금하면 옵션빼고 아래 us 사용하는 데이터 주석처리하고 확인)
                 attributes:['id','nick_name','rank','kakaoId'],
                 where:{
-                    refreshToken:{ [Op.eq]:decoded.refreshToken } ,
+                    refreshToken:{ [Op.eq]:decoded.refreshId} ,
                 }
             });
-            const newAccessToken = jwt.sign({user}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
-            const refresh = "updated";
+            //여기에 id를 userId 로 전환
+            user.userId = user.id;
+            delete user.id;
+            
+            const newAccessToken = jwt.sign({
+                kakaoId:user.kakaoId,
+                nick_name:user.nick_name,
+                userId:user.userId,
+                rank:user.rank
+            }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
+            const refresh = uuidv4();
             const newRefreshToken = jwt.sign({refresh}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '12h' });
             try {
                 await User.update(
                     { refreshToken: refresh },
                     { where:{
-                            refreshToken:{ [Op.eq]:decoded.refreshToken } ,
+                            refreshToken:{ [Op.eq]:decoded.refreshId } ,
                         } }
                 );
 
@@ -119,10 +132,14 @@ exports.verifyToken = async (req, res, next) => {
                 res.sendStatus(500);
                 return;
             }
-            console.log("accessToken None, refreshToken success");
+            
+            req.user = user;
+            //console.log('리퀘스트.유저임!!!',req.user)
             res.cookie('accessToken', newAccessToken, { httpOnly: 'http://localhost:3000/',maxAge:60*10*1000 });
             res.cookie('refreshToken', newRefreshToken, { httpOnly: 'http://localhost:3000/' ,maxAge:60*60*12*1000});
+            res.cookie('newToken2', "new", { httpOnly: 'http://localhost:3000/' ,maxAge:60*60*12*1000});
 
+            console.log("accessToken None, refreshToken success");
             return next();
         } catch (err) {
             console.error(err);

@@ -34,13 +34,22 @@ router.get('/logout',async(req,res)=>{
     });
     const ACCESS_TOKEN = ACCESS.accessToken;
     console.log("accessToken: ",ACCESS_TOKEN);
-    let logout = await axios({
-      method:'post',
-      url:'https://kapi.kakao.com/v1/user/unlink',
-      headers:{
-        'Authorization': `Bearer ${ACCESS_TOKEN}`
-      }
-    });
+    try{
+        let logout = await axios({
+            method:'post',
+            url:'https://kapi.kakao.com/v1/user/unlink',
+            headers:{
+              'Authorization': `Bearer ${ACCESS_TOKEN}`
+            }
+          });
+          await User.update({
+            accessToken: null,
+            refreshToken:null,
+          })
+    }catch(error){
+        res.sendStatus(403).send("카카오 요청 실패")
+    }
+    
     res.cookie('accessToken','',{maxAge:0}); //쿠키 만료 10분
     res.cookie('refreshToken','',{maxAge:0});
   } catch (error) {
@@ -80,9 +89,10 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
     }, process.env.ACCESS_TOKEN_SECRET,{
         expiresIn: '10m', //기간 10분
     });
+    const refreshUUID = uuidv4();
 
     const refreshToken = jwt.sign({
-            uuid:uuidv4(), //고유한 난수를 사용하고싶어서 uuid 사용
+            refreshId:refreshUUID, //고유한 난수를 사용하고싶어서 uuid 사용
         },process.env.REFRESH_TOKEN_SECRET,{
             expiresIn: '12h', //기간 12시간
         }
@@ -98,7 +108,7 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
 
     try {
         await User.update(
-            { refreshToken: refreshToken },
+            { refreshToken: refreshUUID },
             { where:{
                     id:{ [Op.eq]:loggedInUser[0].id } ,
                 } }
@@ -114,15 +124,15 @@ router.get('/kakao/callback',passport.authenticate('kakao',{
 
 });
 
-router.get("/tokenverification",verifyToken, async(req, res) => {
-    console.log("123123");
+router.get("/tokenverification",verifyToken, (req, res) => {
+    console.log("req.headers[accesstoken]: ",req.headers["accesstoken"])
+    console.log("req.headers[refreshtoken]: ",req.headers["refreshtoken"])
+    
     const accessToken = req.headers["accesstoken"] || req.cookies.accessToken;
     const refreshToken = req.headers["refreshtoken"] || req.cookies.refreshToken;
-    //console.log("accessToken", accessToken);
-    //console.log("refreshtoken", refreshToken);
-    if (!accessToken ) {
+    /*if (!accessToken ) {
         return res.sendStatus(400); // Bad Request
-    }
+    }*/
     res.setHeader("accesstoken", accessToken);
     res.setHeader("refreshtoken", refreshToken);
     /*유저 정보가 바뀌었을 땐 토큰 다시 발급하는걸 어케 해야겟넹
@@ -130,13 +140,15 @@ router.get("/tokenverification",verifyToken, async(req, res) => {
         attributes:[nick_name,id,kakaoId,rank]
     })
     */
+   //console.log("req.userreq.userreq.userreq.userreq.userreq.user: ",req.user)
+
     const user = {
         nick_name: req.user.nick_name,
         userId: req.user.userId,
         kakaoId: req.user.kakaoId,
         rank: req.user.rank,
       };
-      console.log(user);
+    console.log("/tokenverification: ",user);
     res.json(user);
     
      // Success
