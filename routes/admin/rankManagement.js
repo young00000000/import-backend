@@ -40,7 +40,7 @@ router.get('/',async(req,res)=>{
     return res.json(users);
 })
 
-//레벨 바꾸기
+//레벨 바꾸기, 이거끝나면 accessToken도 다시 발급
 router.post('/changeRank',async(req,res)=>{
     console.log("changeRanks:으아아ㅏ아아아아아아아ㅏ아아아아아아앙ㅇ\n",req.body.changeRanks);
 

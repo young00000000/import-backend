@@ -141,7 +141,7 @@ router.get("/tokenverification",verifyToken, (req, res) => {
     })
     */
    //console.log("req.userreq.userreq.userreq.userreq.userreq.user: ",req.user)
-
+   //db 에서 꺼내오는걸로 변경
     const user = {
         nick_name: req.user.nick_name,
         userId: req.user.userId,
